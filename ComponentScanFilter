@@ -1,0 +1,86 @@
+#필터
+
+includeFilters : 컴포넌트 스캔 대상을 추가로 지정한다.
+excludeFilters : 컴포넌트 스캔에서 제외할 대상을 지정한다.
+
+컴포넌트 스캔 대상에서 추가할 애노테이션
+
+package hello.core.scan.filter;
+import java.lang.annotation.*;
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface MyIncludeComponent {
+}
+
+
+컴포넌트 스캔 대상에서 제외할 애노테이션 
+
+package hello.core.scan.filter;
+import java.lang.annotation.*;
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface MyExcludeComponent {
+}
+
+컴포넌트 스캔 대상에 추가할 클래스
+package hello.core.scan.filter;
+@MyIncludeComponent
+public class BeanA {
+}
+@MyIncludeComponent 적용함
+
+컴포넌트 스캔 대상에서 제외할 클래스
+package hello.core.scan.filter;
+@MyExcludeComponent
+public class BeanB {
+}
+@MyExcludeComponent 적용함
+
+
+설정 정보와 전체 테스트 코드
+package hello.core.scan.filter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
+import
+org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.FilterType;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.context.annotation.ComponentScan.Filter;
+public class ComponentFilterAppConfigTest {
+ @Test
+ void filterScan() {
+ ApplicationContext ac = new
+AnnotationConfigApplicationContext(ComponentFilterAppConfig.class);
+ BeanA beanA = ac.getBean("beanA", BeanA.class);
+ assertThat(beanA).isNotNull();
+ Assertions.assertThrows(
+ NoSuchBeanDefinitionException.class,
+ () -> ac.getBean("beanB", BeanB.class));
+ }
+ @Configuration
+ @ComponentScan(
+ includeFilters = @Filter(type = FilterType.ANNOTATION, classes =
+MyIncludeComponent.class),
+ excludeFilters = @Filter(type = FilterType.ANNOTATION, classes =
+MyExcludeComponent.class)
+ )
+ static class ComponentFilterAppConfig {
+ }
+}
+@ComponentScan(
+ includeFilters = @Filter(type = FilterType.ANNOTATION, classes =
+ 
+MyIncludeComponent.class),
+ excludeFilters = @Filter(type = FilterType.ANNOTATION, classes =
+ 
+MyExcludeComponent.class)
+)
+includeFilters 에 MyIncludeComponent 애노테이션을 추가해서 BeanA가 스프링 빈에 등록된다.
+excludeFilters 에 MyExcludeComponent 애노테이션을 추가해서 BeanB는 스프링 빈에 등록되지
+않는다
