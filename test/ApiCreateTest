@@ -1,0 +1,75 @@
+<controller 계층 코드>
+
+//test code
+    //id로 회원 정보 조회
+    //@PathVariable로 id를 받음 (url 옆에 붙는 id 값)
+    //memberService의 findMember메서드를 이용해 Service 계층으로 들어감 (매개변수 id)
+    @GetMapping("/member/{id}")
+    public MemberResponseDto getMemberInfo(@PathVariable Long id) {
+        return memberService.findMember(id);
+    }
+
+
+    //회원 전체 목록 조회
+    //memberService의 findAllMember메서드를 이용해 Service 계층으로 들어감 (매개변수 id)
+    @GetMapping("/member")
+    public List<MemberResponseDto> getMemberList() {
+        return memberService.findAllMember();
+    }
+    
+    
+    
+    
+    
+    
+<service 계층 코드>
+
+//test code
+    //id로 회원 정보 조회
+    //@Transactional을 이용해 모든 작업들이 성공해야만 최종적으로 데이터베이스에 반영하도록 한다.
+    //매개변수로 전달받은 id를 이용해 memberRepository에서 member를 찾는다.
+    //id가 repository 계층에 존재하지 않을 시 예외처리가 작동되고
+    // id가 repository 계층에 존재할 시 정상적으로 작동한다.
+    // 정상적으로 작동될 시에는 id를 이용해 찾은 member를 인자값으로 MemberResponseDto에 전달하여 반환한다.
+    @Transactional
+    public MemberResponseDto findMember(Long id) {
+        Member member = memberRepository.findById(id).orElseThrow(
+                () -> new NullPointerException("아이디가 존재하지 않습니다.")
+        );
+        return new MemberResponseDto(member);
+    }
+
+
+    //회원 전체 목록 조회
+    //@Transactional을 이용해 모든 작업들이 성공해야만 최종적으로 데이터베이스에 반영하도록 한다.
+    //memberRepository의 findAllByIdDesc 메서드를 이용해 id를 기준으로
+    //내림차순으로 정렬해 멤버 배열인 members에 저장한다.
+    //memberResponseDto 배열인 dtoList를 새로 생성하고
+    //for문을 이용해 members에서 하나씩 꺼내 dtoList에 저장해 dtoList를 반환한다.
+    @Transactional
+    public List<MemberResponseDto> findAllMember() {
+        List<Member> members = memberRepository.findAllByIdDesc();
+        List<MemberResponseDto> dtoList = new ArrayList();
+        MemberResponseDto selectedMem = null;
+
+        for(Member member : members){
+            dtoList.add(new MemberResponseDto(member));
+        }
+
+        return dtoList;
+    }
+     
+    
+    
+    
+    
+<ResponseDto 코드>
+
+//test code
+    //매개변수로 받는 Member의 getter를 이용해 필드값 초기화한다.
+    public MemberResponseDto(Member member){
+        this.id = member.getId();
+        this.name = member.getName();
+        this.email = member.getEmail();
+        this.pw = member.getPw();
+    }
